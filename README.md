@@ -8,3 +8,19 @@ DIY Project for making a local smart hub and hacking some Teckin SP27 Smart Plug
 ## Installing Elm
 
 ``` sudo npm install elm ```
+
+## Front-end using Elm
+
+blah
+
+## Back-end using Flask
+
+blah
+
+# Hacking the Teckin SP27
+
+blah
+
+## Making the Teckin SP27 'Smart'
+
+blah
