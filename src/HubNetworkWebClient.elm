@@ -25,7 +25,7 @@ bigButton =
 
 bigButtonRefreshing : List (Attribute msg) -> List (Html msg) -> Html msg
 bigButtonRefreshing =
-    styled Html.Styled.button
+    styled bigButton
         [ backgroundColor (hex "#999955") ]
 
 
@@ -75,6 +75,7 @@ type alias Devices =
 
 type alias Model =
     { devices : Devices
+    , waitingForHubStatus : Bool
     , errorMessage : Maybe String
     }
 
@@ -156,7 +157,13 @@ view model =
             ]
             [ text "Local Smart Network" ]
         , viewStatusOrError model
-        , bigButton
+        , if model.waitingForHubStatus then
+            bigButtonRefreshing
+            [ onClick RequestHubStatus ]
+            [ text "Refreshing..." ]
+
+          else
+            bigButton
             [ onClick RequestHubStatus ]
             [ text "Refresh" ]
         ]
@@ -230,7 +237,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestHubStatus ->
-            ( model, getStatus )
+            ( { model | waitingForHubStatus = True } , getStatus )
 
         RequestDeviceStatus device ->
             let
@@ -256,7 +263,7 @@ update msg model =
 
         DataReceived (Ok status) ->
             ( { model
-                | devices = status
+                | devices = status, waitingForHubStatus = False
               }
             , Cmd.none
             )
@@ -272,6 +279,7 @@ update msg model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { devices = []
+      , waitingForHubStatus = True
       , errorMessage = Nothing
       }
     , getStatus

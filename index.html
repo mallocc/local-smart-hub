@@ -6189,7 +6189,7 @@ var $author$project$HubNetworkWebClient$getStatus = $elm$http$Http$get(
 	});
 var $author$project$HubNetworkWebClient$init = function (_v0) {
 	return _Utils_Tuple2(
-		{devices: _List_Nil, errorMessage: $elm$core$Maybe$Nothing},
+		{devices: _List_Nil, errorMessage: $elm$core$Maybe$Nothing, waitingForHubStatus: true},
 		$author$project$HubNetworkWebClient$getStatus);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -8442,7 +8442,11 @@ var $author$project$HubNetworkWebClient$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'RequestHubStatus':
-				return _Utils_Tuple2(model, $author$project$HubNetworkWebClient$getStatus);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{waitingForHubStatus: true}),
+					$author$project$HubNetworkWebClient$getStatus);
 			case 'RequestDeviceStatus':
 				var device = msg.a;
 				var devices = model.devices;
@@ -8463,7 +8467,7 @@ var $author$project$HubNetworkWebClient$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{devices: status}),
+							{devices: status, waitingForHubStatus: false}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					var httpError = msg.a.a;
@@ -9061,6 +9065,14 @@ var $author$project$HubNetworkWebClient$bigButton = A2(
 			$rtfeldman$elm_css$Css$px(16)),
 			$rtfeldman$elm_css$Css$textAlign($rtfeldman$elm_css$Css$center)
 		]));
+var $author$project$HubNetworkWebClient$bigButtonRefreshing = A2(
+	$rtfeldman$elm_css$Html$Styled$styled,
+	$author$project$HubNetworkWebClient$bigButton,
+	_List_fromArray(
+		[
+			$rtfeldman$elm_css$Css$backgroundColor(
+			$rtfeldman$elm_css$Css$hex('#999955'))
+		]));
 var $rtfeldman$elm_css$Html$Styled$Attributes$css = $rtfeldman$elm_css$Html$Styled$Internal$css;
 var $rtfeldman$elm_css$Html$Styled$div = $rtfeldman$elm_css$Html$Styled$node('div');
 var $rtfeldman$elm_css$Css$stringsToValue = function (list) {
@@ -9387,7 +9399,16 @@ var $author$project$HubNetworkWebClient$view = function (model) {
 						$rtfeldman$elm_css$Html$Styled$text('Local Smart Network')
 					])),
 				$author$project$HubNetworkWebClient$viewStatusOrError(model),
-				A2(
+				model.waitingForHubStatus ? A2(
+				$author$project$HubNetworkWebClient$bigButtonRefreshing,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$HubNetworkWebClient$RequestHubStatus)
+					]),
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$text('Refreshing...')
+					])) : A2(
 				$author$project$HubNetworkWebClient$bigButton,
 				_List_fromArray(
 					[
