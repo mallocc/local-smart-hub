@@ -260,8 +260,8 @@ buildErrorMessage httpError =
 
 urlHub : String
 urlHub =
-    -- "http://192.168.1.94:8000"
-    "http://localhost:8000"
+    "http://192.168.1.94:8000"
+    -- "http://localhost:8000"
 
 
 rgbDecoder : Decoder RGB

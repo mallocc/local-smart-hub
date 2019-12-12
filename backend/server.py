@@ -79,9 +79,11 @@ def espConnect():
     return ("connected", 200)
 
 
-@app.route('/esp', methods=['GET'])
-def getOnStatus():
-	devices["192.168.150.3"].commandOnStatus()
+@app.route('/<name>', methods=['GET'])
+def getOnStatus(name):
+	for key, value in devices.items():
+		if name == value.name:
+			value.commandOnStatus()
 	return getJson()
 
 
