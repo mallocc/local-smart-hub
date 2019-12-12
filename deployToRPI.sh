@@ -14,4 +14,6 @@ scp server.py $server:~/rpiWebServer/.
 
 echo STARTING SERVER
 
+ssh $server "echo raspberry | sudo -S killall -v server.py"
+
 ssh $server "echo raspberry | sudo -S ./rpiWebServer/server.py"

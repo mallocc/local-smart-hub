@@ -13,6 +13,8 @@ bool lightOn = true;
 char host[] = "192.168.150.1";
 int port = 8000;
 
+int pollServerTime = 0;
+int pollServerTimer = 100000;
 
 bool sendConnectionRequest()
 {
@@ -33,12 +35,16 @@ bool sendConnectionRequest()
   Serial.println("closing connection");
   http.end();
 
+  delay(1000);
+
   return success;
 }
 
 void tryConnection()
 {
+  Serial.println("Aquiring connection...");
   while (!sendConnectionRequest());
+  pollServerTime = 0;
 }
 
 void setup() {
@@ -71,14 +77,19 @@ void setup() {
   server.begin();                    //Start the server
   Serial.println("Server listening...");
 
-  Serial.println("Aquiring connection...");
+
   tryConnection();
 }
  
 void loop() {
  
   server.handleClient();         //Handling of incoming requests
- 
+
+  ++pollServerTime;
+  if (pollServerTime == pollServerTimer)
+  {
+    tryConnection();
+  }
 }
 
 void handleAliveRequest()
@@ -86,7 +97,8 @@ void handleAliveRequest()
   std::stringstream ss;
   ss << "{ \"alive\": \"" << "TRUE" << "\" }";
   server.send(200, "text/plain", ss.str().c_str());
-    Serial.println("Received request ALIVE");
+  Serial.println("Received request ALIVE");
+  pollServerTime = 0;
 }
 
 void handleRootPath() {            //Handler for the rooth path
