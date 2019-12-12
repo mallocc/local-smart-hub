@@ -6160,19 +6160,109 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$HubNetworkWebClient$Device = F3(
-	function (name, status, commandUrl) {
-		return {commandUrl: commandUrl, name: name, status: status};
+var $author$project$HubNetworkWebClient$Device = F4(
+	function (name, status, commandUrl, rgb) {
+		return {commandUrl: commandUrl, name: name, rgb: rgb, status: status};
 	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $author$project$HubNetworkWebClient$nullRGB = {blue: -1, green: -1, red: -1};
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = $elm$json$Json$Decode$map2($elm$core$Basics$apR);
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder = F3(
+	function (pathDecoder, valDecoder, fallback) {
+		var nullOr = function (decoder) {
+			return $elm$json$Json$Decode$oneOf(
+				_List_fromArray(
+					[
+						decoder,
+						$elm$json$Json$Decode$null(fallback)
+					]));
+		};
+		var handleResult = function (input) {
+			var _v0 = A2($elm$json$Json$Decode$decodeValue, pathDecoder, input);
+			if (_v0.$ === 'Ok') {
+				var rawValue = _v0.a;
+				var _v1 = A2(
+					$elm$json$Json$Decode$decodeValue,
+					nullOr(valDecoder),
+					rawValue);
+				if (_v1.$ === 'Ok') {
+					var finalResult = _v1.a;
+					return $elm$json$Json$Decode$succeed(finalResult);
+				} else {
+					var finalErr = _v1.a;
+					return $elm$json$Json$Decode$fail(
+						$elm$json$Json$Decode$errorToString(finalErr));
+				}
+			} else {
+				return $elm$json$Json$Decode$succeed(fallback);
+			}
+		};
+		return A2($elm$json$Json$Decode$andThen, handleResult, $elm$json$Json$Decode$value);
+	});
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional = F4(
+	function (key, valDecoder, fallback, decoder) {
+		return A2(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder,
+				A2($elm$json$Json$Decode$field, key, $elm$json$Json$Decode$value),
+				valDecoder,
+				fallback),
+			decoder);
+	});
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
+	function (key, valDecoder, decoder) {
+		return A2(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A2($elm$json$Json$Decode$field, key, valDecoder),
+			decoder);
+	});
+var $author$project$HubNetworkWebClient$RGB = F3(
+	function (red, green, blue) {
+		return {blue: blue, green: green, red: red};
+	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$HubNetworkWebClient$rgbDecoder = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'blue',
+	$elm$json$Json$Decode$int,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'green',
+		$elm$json$Json$Decode$int,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'red',
+			$elm$json$Json$Decode$int,
+			$elm$json$Json$Decode$succeed($author$project$HubNetworkWebClient$RGB))));
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$HubNetworkWebClient$deviceDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$HubNetworkWebClient$Device,
-	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'status', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string));
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+	'rgb',
+	$author$project$HubNetworkWebClient$rgbDecoder,
+	$author$project$HubNetworkWebClient$nullRGB,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'url',
+		$elm$json$Json$Decode$string,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'status',
+			$elm$json$Json$Decode$string,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'name',
+				$elm$json$Json$Decode$string,
+				$elm$json$Json$Decode$succeed($author$project$HubNetworkWebClient$Device)))));
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$HubNetworkWebClient$statusDecoder = A2(
 	$elm$json$Json$Decode$map,
@@ -6181,7 +6271,7 @@ var $author$project$HubNetworkWebClient$statusDecoder = A2(
 		$elm$json$Json$Decode$field,
 		'devices',
 		$elm$json$Json$Decode$list($author$project$HubNetworkWebClient$deviceDecoder)));
-var $author$project$HubNetworkWebClient$urlHub = 'http://192.168.1.94';
+var $author$project$HubNetworkWebClient$urlHub = 'http://localhost:8000';
 var $author$project$HubNetworkWebClient$getStatus = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$HubNetworkWebClient$DataReceived, $author$project$HubNetworkWebClient$statusDecoder),
@@ -7429,9 +7519,6 @@ var $Skinney$murmur3$Murmur3$hashString = F2(
 	});
 var $rtfeldman$elm_css$Hash$murmurSeed = 15739;
 var $elm$core$String$fromList = _String_fromList;
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $rtfeldman$elm_hex$Hex$unsafeToDigit = function (num) {
 	unsafeToDigit:
@@ -8433,6 +8520,14 @@ var $author$project$HubNetworkWebClient$getDeviceStatus = function (subUrl) {
 };
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$HubNetworkWebClient$requestColor = F3(
+	function (device, color, direction) {
+		return $elm$http$Http$get(
+			{
+				expect: A2($elm$http$Http$expectJson, $author$project$HubNetworkWebClient$DataReceived, $author$project$HubNetworkWebClient$statusDecoder),
+				url: $author$project$HubNetworkWebClient$urlHub + (device.commandUrl + ('/rgb/' + (color + ('/' + direction))))
+			});
+	});
 var $author$project$HubNetworkWebClient$setWaiting = function (device) {
 	return _Utils_update(
 		device,
@@ -8461,6 +8556,13 @@ var $author$project$HubNetworkWebClient$update = F2(
 						model,
 						{devices: newDevices}),
 					$author$project$HubNetworkWebClient$getDeviceStatus(device.commandUrl));
+			case 'RequestDeviceColor':
+				var device = msg.a;
+				var color = msg.b;
+				var dircetion = msg.c;
+				return _Utils_Tuple2(
+					model,
+					A3($author$project$HubNetworkWebClient$requestColor, device, color, dircetion));
 			default:
 				if (msg.a.$ === 'Ok') {
 					var status = msg.a.a;
@@ -9169,10 +9271,57 @@ var $rtfeldman$elm_css$Css$prop4 = F5(
 var $rtfeldman$elm_css$Css$boxShadow4 = $rtfeldman$elm_css$Css$prop4('box-shadow');
 var $rtfeldman$elm_css$Html$Styled$h2 = $rtfeldman$elm_css$Html$Styled$node('h2');
 var $rtfeldman$elm_css$Html$Styled$table = $rtfeldman$elm_css$Html$Styled$node('table');
+var $author$project$HubNetworkWebClient$RequestDeviceColor = F3(
+	function (a, b, c) {
+		return {$: 'RequestDeviceColor', a: a, b: b, c: c};
+	});
 var $author$project$HubNetworkWebClient$RequestDeviceStatus = function (a) {
 	return {$: 'RequestDeviceStatus', a: a};
 };
 var $rtfeldman$elm_css$Css$margin = $rtfeldman$elm_css$Css$prop1('margin');
+var $author$project$HubNetworkWebClient$colorButton = A2(
+	$rtfeldman$elm_css$Html$Styled$styled,
+	$rtfeldman$elm_css$Html$Styled$button,
+	_List_fromArray(
+		[
+			$rtfeldman$elm_css$Css$width(
+			$rtfeldman$elm_css$Css$px(50)),
+			$rtfeldman$elm_css$Css$backgroundColor(
+			$rtfeldman$elm_css$Css$hex('#397cd5')),
+			$rtfeldman$elm_css$Css$color(
+			$rtfeldman$elm_css$Css$hex('#fff')),
+			$rtfeldman$elm_css$Css$margin(
+			$rtfeldman$elm_css$Css$px(5)),
+			$rtfeldman$elm_css$Css$border(
+			$rtfeldman$elm_css$Css$px(0)),
+			$rtfeldman$elm_css$Css$borderRadius(
+			$rtfeldman$elm_css$Css$px(4)),
+			$rtfeldman$elm_css$Css$fontSize(
+			$rtfeldman$elm_css$Css$px(15))
+		]));
+var $elm$core$Basics$ge = _Utils_ge;
+var $rtfeldman$elm_css$Css$cssFunction = F2(
+	function (funcName, args) {
+		return funcName + ('(' + (A2($elm$core$String$join, ', ', args) + ')'));
+	});
+var $rtfeldman$elm_css$Css$rgb = F3(
+	function (r, g, b) {
+		return {
+			alpha: 1,
+			blue: b,
+			color: $rtfeldman$elm_css$Css$Structure$Compatible,
+			green: g,
+			red: r,
+			value: A2(
+				$rtfeldman$elm_css$Css$cssFunction,
+				'rgb',
+				A2(
+					$elm$core$List$map,
+					$elm$core$String$fromInt,
+					_List_fromArray(
+						[r, g, b])))
+		};
+	});
 var $rtfeldman$elm_css$Css$marginLeft = $rtfeldman$elm_css$Css$prop1('margin-left');
 var $author$project$HubNetworkWebClient$smallButton = A2(
 	$rtfeldman$elm_css$Html$Styled$styled,
@@ -9279,7 +9428,111 @@ var $author$project$HubNetworkWebClient$viewDevice = function (device) {
 							[
 								$rtfeldman$elm_css$Html$Styled$text('Switch On')
 							])))
-					]))
+					])),
+				(device.rgb.red >= 0) ? A2(
+				$rtfeldman$elm_css$Html$Styled$td,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$css(
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Css$backgroundColor(
+								A3($rtfeldman$elm_css$Css$rgb, device.rgb.red, device.rgb.green, device.rgb.blue))
+							]))
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$rtfeldman$elm_css$Html$Styled$tr,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'red', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+R')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'red', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-R')
+											]))
+									])),
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'green', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+G')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'green', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-G')
+											]))
+									])),
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'blue', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+B')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'blue', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-B')
+											]))
+									]))
+							]))
+					])) : A2($rtfeldman$elm_css$Html$Styled$td, _List_Nil, _List_Nil)
 			]));
 };
 var $rtfeldman$elm_css$Html$Styled$th = $rtfeldman$elm_css$Html$Styled$node('th');
@@ -9301,6 +9554,13 @@ var $author$project$HubNetworkWebClient$viewTableHeader = A2(
 			_List_fromArray(
 				[
 					$rtfeldman$elm_css$Html$Styled$text('Status')
+				])),
+			A2(
+			$rtfeldman$elm_css$Html$Styled$th,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$text('RGB')
 				]))
 		]));
 var $author$project$HubNetworkWebClient$viewStatus = function (status) {
@@ -9361,7 +9621,7 @@ var $author$project$HubNetworkWebClient$view = function (model) {
 		$rtfeldman$elm_css$Html$Styled$div,
 		_List_fromArray(
 			[
-				A2($rtfeldman$elm_css$Html$Styled$Attributes$style, 'width', '300px'),
+				A2($rtfeldman$elm_css$Html$Styled$Attributes$style, 'width', '500px'),
 				$rtfeldman$elm_css$Html$Styled$Attributes$css(
 				_List_fromArray(
 					[

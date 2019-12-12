@@ -6,7 +6,10 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode as Decode exposing (Decoder, int, string, float)
+import Json.Decode.Pipeline exposing (required, optional, hardcoded)
+import Time
+
 
 
 bigButton : List (Attribute msg) -> List (Html msg) -> Html msg
@@ -23,11 +26,24 @@ bigButton =
         , textAlign center
         ]
 
+
 bigButtonRefreshing : List (Attribute msg) -> List (Html msg) -> Html msg
 bigButtonRefreshing =
     styled bigButton
         [ backgroundColor (hex "#999955") ]
 
+
+colorButton : List (Attribute msg) -> List (Html msg) -> Html msg
+colorButton =
+    styled Html.Styled.button
+        [ Css.width (px 50)
+                , backgroundColor (hex "#397cd5")
+        , color (hex "#fff")
+        , margin (px 5)
+        , border (px 0)
+        , borderRadius (px 4)
+        , fontSize (px 15)
+        ]
 
 smallButton : List (Attribute msg) -> List (Html msg) -> Html msg
 smallButton =
@@ -62,10 +78,25 @@ smallButtonOff =
         [ backgroundColor (hex "#114433") ]
 
 
+type alias RGB =
+    { red : Int
+    , green : Int
+    , blue : Int
+    }
+
+nullRGB : RGB
+nullRGB =
+    { red = -1
+    , green = -1
+    , blue = -1
+    }
+
+
 type alias Device =
     { name : String
     , status : String
     , commandUrl : String
+    , rgb : RGB
     }
 
 
@@ -76,6 +107,7 @@ type alias Devices =
 type alias Model =
     { devices : Devices
     , waitingForHubStatus : Bool
+    , time : Time.Posix
     , errorMessage : Maybe String
     }
 
@@ -99,8 +131,21 @@ viewTableHeader =
             [ text "Name" ]
         , th []
             [ text "Status" ]
+        , th []
+            [ text "RGB" ]
         ]
 
+
+rgbTableHeader : Html Msg
+rgbTableHeader =
+    tr []
+        [ th []
+            [ text "R" ]
+        , th []
+            [ text "G" ]
+        , th []
+            [ text "B" ]
+        ]
 
 viewDevice : Device -> Html Msg
 viewDevice device =
@@ -117,6 +162,31 @@ viewDevice device =
               else
                 smallButtonOff [ onClick (RequestDeviceStatus device) ] [ text "Switch On" ]
             ]
+            , if device.rgb.red >= 0 then
+                td [ css [ backgroundColor (rgb 
+                        device.rgb.red
+                        device.rgb.green
+                        device.rgb.blue) ] ] 
+                    [
+                         tr [] 
+                            [
+                                  td []
+                                    [ colorButton [ onClick (RequestDeviceColor device "red" "up") ] [ text "+R" ]
+                                    ,colorButton [ onClick (RequestDeviceColor device "red" "down") ] [ text "-R" ]
+                                    ]
+                                , td []
+                                    [ colorButton [ onClick (RequestDeviceColor device "green" "up") ] [ text "+G" ]
+                                    ,colorButton [ onClick (RequestDeviceColor device "green" "down") ] [ text "-G" ]
+                                    ]
+                                , td []
+                                    [ colorButton [ onClick (RequestDeviceColor device "blue" "up") ] [ text "+B" ]
+                                    ,colorButton [ onClick (RequestDeviceColor device "blue" "down") ] [ text "-B" ]
+                                    ]
+                            ]
+                    ]
+
+            else
+                td [] []
         ]
 
 
@@ -147,7 +217,7 @@ viewStatusOrError model =
 view : Model -> Html Msg
 view model =
     div
-        [ style "width" "300px"
+        [ style "width" "500px"
         , css [ margin2 (px 20) auto ]
         , css [ fontFamilies [ "Verdana", "Arial" ] ]
         ]
@@ -157,15 +227,15 @@ view model =
             ]
             [ text "Local Smart Network" ]
         , viewStatusOrError model
-        , if model.waitingForHubStatus then
-            bigButtonRefreshing
-            [ onClick RequestHubStatus ]
-            [ text "Refreshing..." ]
+        -- , if model.waitingForHubStatus then
+        --     bigButtonRefreshing
+        --         [ onClick RequestHubStatus ]
+        --         [ text "Refreshing..." ]
 
-          else
-            bigButton
-            [ onClick RequestHubStatus ]
-            [ text "Refresh" ]
+        --   else
+        --     bigButton
+        --         [ onClick RequestHubStatus ]
+        --         [ text "Refresh" ]
         ]
 
 
@@ -190,16 +260,25 @@ buildErrorMessage httpError =
 
 urlHub : String
 urlHub =
-    "http://192.168.1.94"
-    -- "http://localhost"
+    -- "http://192.168.1.94:8000"
+    "http://localhost:8000"
+
+
+rgbDecoder : Decoder RGB
+rgbDecoder =
+    Decode.succeed  RGB
+        |> Json.Decode.Pipeline.required "red" Decode.int
+        |> Json.Decode.Pipeline.required "green" Decode.int
+        |> Json.Decode.Pipeline.required "blue" Decode.int
 
 
 deviceDecoder : Decoder Device
 deviceDecoder =
-    Decode.map3 Device
-        (Decode.field "name" Decode.string)
-        (Decode.field "status" Decode.string)
-        (Decode.field "url" Decode.string)
+    Decode.succeed Device
+        |> Json.Decode.Pipeline.required "name" string
+        |> Json.Decode.Pipeline.required "status" string
+        |> Json.Decode.Pipeline.required "url" string
+        |> Json.Decode.Pipeline.optional "rgb" rgbDecoder nullRGB
 
 
 statusDecoder : Decoder Devices
@@ -223,10 +302,20 @@ getDeviceStatus subUrl =
         }
 
 
+requestColor : Device -> String -> String -> Cmd Msg
+requestColor device color direction =
+    Http.get
+        { url = urlHub ++ device.commandUrl ++ "/rgb/" ++ color ++ "/" ++ direction
+        , expect = Http.expectJson DataReceived statusDecoder
+        }
+
+
 type Msg
     = RequestHubStatus
     | RequestDeviceStatus Device
+    | RequestDeviceColor Device String String
     | DataReceived (Result Http.Error Devices)
+    | Tick Time.Posix
 
 
 setWaiting device =
@@ -237,7 +326,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestHubStatus ->
-            ( { model | waitingForHubStatus = True } , getStatus )
+            ( { model | waitingForHubStatus = True }, getStatus )
 
         RequestDeviceStatus device ->
             let
@@ -261,9 +350,13 @@ update msg model =
             , getDeviceStatus device.commandUrl
             )
 
+        RequestDeviceColor device color dircetion ->
+            ( model, requestColor device color dircetion )
+            
         DataReceived (Ok status) ->
             ( { model
-                | devices = status, waitingForHubStatus = False
+                | devices = status
+                , waitingForHubStatus = False
               }
             , Cmd.none
             )
@@ -275,11 +368,22 @@ update msg model =
             , Cmd.none
             )
 
+        Tick newTime ->
+            ( { model | time = newTime }
+            , getStatus
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Time.every 1000 Tick
+
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { devices = []
       , waitingForHubStatus = True
+      , time = Time.millisToPosix 0
       , errorMessage = Nothing
       }
     , getStatus
@@ -292,5 +396,5 @@ main =
         { init = init
         , view = view >> toUnstyled
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }

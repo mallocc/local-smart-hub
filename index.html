@@ -4547,6 +4547,52 @@ function _Http_track(router, xhr, tracker)
 }
 
 
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2($elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = $elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = $elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+
+
+
 var _Bitwise_and = F2(function(a, b)
 {
 	return a & b;
@@ -6160,19 +6206,109 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$HubNetworkWebClient$Device = F3(
-	function (name, status, commandUrl) {
-		return {commandUrl: commandUrl, name: name, status: status};
+var $author$project$HubNetworkWebClient$Device = F4(
+	function (name, status, commandUrl, rgb) {
+		return {commandUrl: commandUrl, name: name, rgb: rgb, status: status};
 	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $author$project$HubNetworkWebClient$nullRGB = {blue: -1, green: -1, red: -1};
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = $elm$json$Json$Decode$map2($elm$core$Basics$apR);
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$json$Json$Decode$decodeValue = _Json_run;
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$value = _Json_decodeValue;
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder = F3(
+	function (pathDecoder, valDecoder, fallback) {
+		var nullOr = function (decoder) {
+			return $elm$json$Json$Decode$oneOf(
+				_List_fromArray(
+					[
+						decoder,
+						$elm$json$Json$Decode$null(fallback)
+					]));
+		};
+		var handleResult = function (input) {
+			var _v0 = A2($elm$json$Json$Decode$decodeValue, pathDecoder, input);
+			if (_v0.$ === 'Ok') {
+				var rawValue = _v0.a;
+				var _v1 = A2(
+					$elm$json$Json$Decode$decodeValue,
+					nullOr(valDecoder),
+					rawValue);
+				if (_v1.$ === 'Ok') {
+					var finalResult = _v1.a;
+					return $elm$json$Json$Decode$succeed(finalResult);
+				} else {
+					var finalErr = _v1.a;
+					return $elm$json$Json$Decode$fail(
+						$elm$json$Json$Decode$errorToString(finalErr));
+				}
+			} else {
+				return $elm$json$Json$Decode$succeed(fallback);
+			}
+		};
+		return A2($elm$json$Json$Decode$andThen, handleResult, $elm$json$Json$Decode$value);
+	});
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional = F4(
+	function (key, valDecoder, fallback, decoder) {
+		return A2(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder,
+				A2($elm$json$Json$Decode$field, key, $elm$json$Json$Decode$value),
+				valDecoder,
+				fallback),
+			decoder);
+	});
+var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
+	function (key, valDecoder, decoder) {
+		return A2(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A2($elm$json$Json$Decode$field, key, valDecoder),
+			decoder);
+	});
+var $author$project$HubNetworkWebClient$RGB = F3(
+	function (red, green, blue) {
+		return {blue: blue, green: green, red: red};
+	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$HubNetworkWebClient$rgbDecoder = A3(
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+	'blue',
+	$elm$json$Json$Decode$int,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'green',
+		$elm$json$Json$Decode$int,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'red',
+			$elm$json$Json$Decode$int,
+			$elm$json$Json$Decode$succeed($author$project$HubNetworkWebClient$RGB))));
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$HubNetworkWebClient$deviceDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$HubNetworkWebClient$Device,
-	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'status', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string));
+	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional,
+	'rgb',
+	$author$project$HubNetworkWebClient$rgbDecoder,
+	$author$project$HubNetworkWebClient$nullRGB,
+	A3(
+		$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+		'url',
+		$elm$json$Json$Decode$string,
+		A3(
+			$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'status',
+			$elm$json$Json$Decode$string,
+			A3(
+				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'name',
+				$elm$json$Json$Decode$string,
+				$elm$json$Json$Decode$succeed($author$project$HubNetworkWebClient$Device)))));
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$HubNetworkWebClient$statusDecoder = A2(
 	$elm$json$Json$Decode$map,
@@ -6181,19 +6317,298 @@ var $author$project$HubNetworkWebClient$statusDecoder = A2(
 		$elm$json$Json$Decode$field,
 		'devices',
 		$elm$json$Json$Decode$list($author$project$HubNetworkWebClient$deviceDecoder)));
-var $author$project$HubNetworkWebClient$urlHub = 'http://192.168.1.94';
+var $author$project$HubNetworkWebClient$urlHub = 'http://192.168.1.94:8000';
 var $author$project$HubNetworkWebClient$getStatus = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$HubNetworkWebClient$DataReceived, $author$project$HubNetworkWebClient$statusDecoder),
 		url: $author$project$HubNetworkWebClient$urlHub + '/refresh'
 	});
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
 var $author$project$HubNetworkWebClient$init = function (_v0) {
 	return _Utils_Tuple2(
-		{devices: _List_Nil, errorMessage: $elm$core$Maybe$Nothing, waitingForHubStatus: true},
+		{
+			devices: _List_Nil,
+			errorMessage: $elm$core$Maybe$Nothing,
+			time: $elm$time$Time$millisToPosix(0),
+			waitingForHubStatus: true
+		},
 		$author$project$HubNetworkWebClient$getStatus);
 };
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$HubNetworkWebClient$Tick = function (a) {
+	return {$: 'Tick', a: a};
+};
+var $elm$time$Time$Every = F2(
+	function (a, b) {
+		return {$: 'Every', a: a, b: b};
+	});
+var $elm$time$Time$State = F2(
+	function (taggers, processes) {
+		return {processes: processes, taggers: taggers};
+	});
+var $elm$time$Time$init = $elm$core$Task$succeed(
+	A2($elm$time$Time$State, $elm$core$Dict$empty, $elm$core$Dict$empty));
+var $elm$time$Time$addMySub = F2(
+	function (_v0, state) {
+		var interval = _v0.a;
+		var tagger = _v0.b;
+		var _v1 = A2($elm$core$Dict$get, interval, state);
+		if (_v1.$ === 'Nothing') {
+			return A3(
+				$elm$core$Dict$insert,
+				interval,
+				_List_fromArray(
+					[tagger]),
+				state);
+		} else {
+			var taggers = _v1.a;
+			return A3(
+				$elm$core$Dict$insert,
+				interval,
+				A2($elm$core$List$cons, tagger, taggers),
+				state);
+		}
+	});
+var $elm$core$Dict$foldl = F3(
+	function (func, acc, dict) {
+		foldl:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return acc;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var $temp$func = func,
+					$temp$acc = A3(
+					func,
+					key,
+					value,
+					A3($elm$core$Dict$foldl, func, acc, left)),
+					$temp$dict = right;
+				func = $temp$func;
+				acc = $temp$acc;
+				dict = $temp$dict;
+				continue foldl;
+			}
+		}
+	});
+var $elm$core$Dict$merge = F6(
+	function (leftStep, bothStep, rightStep, leftDict, rightDict, initialResult) {
+		var stepState = F3(
+			function (rKey, rValue, _v0) {
+				stepState:
+				while (true) {
+					var list = _v0.a;
+					var result = _v0.b;
+					if (!list.b) {
+						return _Utils_Tuple2(
+							list,
+							A3(rightStep, rKey, rValue, result));
+					} else {
+						var _v2 = list.a;
+						var lKey = _v2.a;
+						var lValue = _v2.b;
+						var rest = list.b;
+						if (_Utils_cmp(lKey, rKey) < 0) {
+							var $temp$rKey = rKey,
+								$temp$rValue = rValue,
+								$temp$_v0 = _Utils_Tuple2(
+								rest,
+								A3(leftStep, lKey, lValue, result));
+							rKey = $temp$rKey;
+							rValue = $temp$rValue;
+							_v0 = $temp$_v0;
+							continue stepState;
+						} else {
+							if (_Utils_cmp(lKey, rKey) > 0) {
+								return _Utils_Tuple2(
+									list,
+									A3(rightStep, rKey, rValue, result));
+							} else {
+								return _Utils_Tuple2(
+									rest,
+									A4(bothStep, lKey, lValue, rValue, result));
+							}
+						}
+					}
+				}
+			});
+		var _v3 = A3(
+			$elm$core$Dict$foldl,
+			stepState,
+			_Utils_Tuple2(
+				$elm$core$Dict$toList(leftDict),
+				initialResult),
+			rightDict);
+		var leftovers = _v3.a;
+		var intermediateResult = _v3.b;
+		return A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v4, result) {
+					var k = _v4.a;
+					var v = _v4.b;
+					return A3(leftStep, k, v, result);
+				}),
+			intermediateResult,
+			leftovers);
+	});
+var $elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var $elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$customZone = $elm$time$Time$Zone;
+var $elm$time$Time$setInterval = _Time_setInterval;
+var $elm$time$Time$spawnHelp = F3(
+	function (router, intervals, processes) {
+		if (!intervals.b) {
+			return $elm$core$Task$succeed(processes);
+		} else {
+			var interval = intervals.a;
+			var rest = intervals.b;
+			var spawnTimer = $elm$core$Process$spawn(
+				A2(
+					$elm$time$Time$setInterval,
+					interval,
+					A2($elm$core$Platform$sendToSelf, router, interval)));
+			var spawnRest = function (id) {
+				return A3(
+					$elm$time$Time$spawnHelp,
+					router,
+					rest,
+					A3($elm$core$Dict$insert, interval, id, processes));
+			};
+			return A2($elm$core$Task$andThen, spawnRest, spawnTimer);
+		}
+	});
+var $elm$time$Time$onEffects = F3(
+	function (router, subs, _v0) {
+		var processes = _v0.processes;
+		var rightStep = F3(
+			function (_v6, id, _v7) {
+				var spawns = _v7.a;
+				var existing = _v7.b;
+				var kills = _v7.c;
+				return _Utils_Tuple3(
+					spawns,
+					existing,
+					A2(
+						$elm$core$Task$andThen,
+						function (_v5) {
+							return kills;
+						},
+						$elm$core$Process$kill(id)));
+			});
+		var newTaggers = A3($elm$core$List$foldl, $elm$time$Time$addMySub, $elm$core$Dict$empty, subs);
+		var leftStep = F3(
+			function (interval, taggers, _v4) {
+				var spawns = _v4.a;
+				var existing = _v4.b;
+				var kills = _v4.c;
+				return _Utils_Tuple3(
+					A2($elm$core$List$cons, interval, spawns),
+					existing,
+					kills);
+			});
+		var bothStep = F4(
+			function (interval, taggers, id, _v3) {
+				var spawns = _v3.a;
+				var existing = _v3.b;
+				var kills = _v3.c;
+				return _Utils_Tuple3(
+					spawns,
+					A3($elm$core$Dict$insert, interval, id, existing),
+					kills);
+			});
+		var _v1 = A6(
+			$elm$core$Dict$merge,
+			leftStep,
+			bothStep,
+			rightStep,
+			newTaggers,
+			processes,
+			_Utils_Tuple3(
+				_List_Nil,
+				$elm$core$Dict$empty,
+				$elm$core$Task$succeed(_Utils_Tuple0)));
+		var spawnList = _v1.a;
+		var existingDict = _v1.b;
+		var killTask = _v1.c;
+		return A2(
+			$elm$core$Task$andThen,
+			function (newProcesses) {
+				return $elm$core$Task$succeed(
+					A2($elm$time$Time$State, newTaggers, newProcesses));
+			},
+			A2(
+				$elm$core$Task$andThen,
+				function (_v2) {
+					return A3($elm$time$Time$spawnHelp, router, spawnList, existingDict);
+				},
+				killTask));
+	});
+var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
+var $elm$time$Time$onSelfMsg = F3(
+	function (router, interval, state) {
+		var _v0 = A2($elm$core$Dict$get, interval, state.taggers);
+		if (_v0.$ === 'Nothing') {
+			return $elm$core$Task$succeed(state);
+		} else {
+			var taggers = _v0.a;
+			var tellTaggers = function (time) {
+				return $elm$core$Task$sequence(
+					A2(
+						$elm$core$List$map,
+						function (tagger) {
+							return A2(
+								$elm$core$Platform$sendToApp,
+								router,
+								tagger(time));
+						},
+						taggers));
+			};
+			return A2(
+				$elm$core$Task$andThen,
+				function (_v1) {
+					return $elm$core$Task$succeed(state);
+				},
+				A2($elm$core$Task$andThen, tellTaggers, $elm$time$Time$now));
+		}
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$time$Time$subMap = F2(
+	function (f, _v0) {
+		var interval = _v0.a;
+		var tagger = _v0.b;
+		return A2(
+			$elm$time$Time$Every,
+			interval,
+			A2($elm$core$Basics$composeL, f, tagger));
+	});
+_Platform_effectManagers['Time'] = _Platform_createManager($elm$time$Time$init, $elm$time$Time$onEffects, $elm$time$Time$onSelfMsg, 0, $elm$time$Time$subMap);
+var $elm$time$Time$subscription = _Platform_leaf('Time');
+var $elm$time$Time$every = F2(
+	function (interval, tagger) {
+		return $elm$time$Time$subscription(
+			A2($elm$time$Time$Every, interval, tagger));
+	});
+var $author$project$HubNetworkWebClient$subscriptions = function (model) {
+	return A2($elm$time$Time$every, 1000, $author$project$HubNetworkWebClient$Tick);
+};
 var $elm$core$List$isEmpty = function (xs) {
 	if (!xs.b) {
 		return true;
@@ -6507,11 +6922,6 @@ var $elm$core$List$any = F2(
 				}
 			}
 		}
-	});
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
 	});
 var $elm$core$Basics$not = _Basics_not;
 var $elm$core$List$all = F2(
@@ -7429,9 +7839,6 @@ var $Skinney$murmur3$Murmur3$hashString = F2(
 	});
 var $rtfeldman$elm_css$Hash$murmurSeed = 15739;
 var $elm$core$String$fromList = _String_fromList;
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$core$Basics$modBy = _Basics_modBy;
 var $rtfeldman$elm_hex$Hex$unsafeToDigit = function (num) {
 	unsafeToDigit:
@@ -8433,6 +8840,14 @@ var $author$project$HubNetworkWebClient$getDeviceStatus = function (subUrl) {
 };
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$HubNetworkWebClient$requestColor = F3(
+	function (device, color, direction) {
+		return $elm$http$Http$get(
+			{
+				expect: A2($elm$http$Http$expectJson, $author$project$HubNetworkWebClient$DataReceived, $author$project$HubNetworkWebClient$statusDecoder),
+				url: $author$project$HubNetworkWebClient$urlHub + (device.commandUrl + ('/rgb/' + (color + ('/' + direction))))
+			});
+	});
 var $author$project$HubNetworkWebClient$setWaiting = function (device) {
 	return _Utils_update(
 		device,
@@ -8461,7 +8876,14 @@ var $author$project$HubNetworkWebClient$update = F2(
 						model,
 						{devices: newDevices}),
 					$author$project$HubNetworkWebClient$getDeviceStatus(device.commandUrl));
-			default:
+			case 'RequestDeviceColor':
+				var device = msg.a;
+				var color = msg.b;
+				var dircetion = msg.c;
+				return _Utils_Tuple2(
+					model,
+					A3($author$project$HubNetworkWebClient$requestColor, device, color, dircetion));
+			case 'DataReceived':
 				if (msg.a.$ === 'Ok') {
 					var status = msg.a.a;
 					return _Utils_Tuple2(
@@ -8480,11 +8902,63 @@ var $author$project$HubNetworkWebClient$update = F2(
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
+			default:
+				var newTime = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{time: newTime}),
+					$author$project$HubNetworkWebClient$getStatus);
 		}
 	});
-var $author$project$HubNetworkWebClient$RequestHubStatus = {$: 'RequestHubStatus'};
 var $rtfeldman$elm_css$Css$Structure$Compatible = {$: 'Compatible'};
 var $rtfeldman$elm_css$Css$auto = {alignItemsOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible, cursor: $rtfeldman$elm_css$Css$Structure$Compatible, flexBasis: $rtfeldman$elm_css$Css$Structure$Compatible, intOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible, justifyContentOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrAutoOrCoverOrContain: $rtfeldman$elm_css$Css$Structure$Compatible, lengthOrNumberOrAutoOrNoneOrContent: $rtfeldman$elm_css$Css$Structure$Compatible, overflow: $rtfeldman$elm_css$Css$Structure$Compatible, pointerEvents: $rtfeldman$elm_css$Css$Structure$Compatible, tableLayout: $rtfeldman$elm_css$Css$Structure$Compatible, textRendering: $rtfeldman$elm_css$Css$Structure$Compatible, touchAction: $rtfeldman$elm_css$Css$Structure$Compatible, value: 'auto'};
+var $rtfeldman$elm_css$VirtualDom$Styled$Attribute = F3(
+	function (a, b, c) {
+		return {$: 'Attribute', a: a, b: b, c: c};
+	});
+var $rtfeldman$elm_css$VirtualDom$Styled$murmurSeed = 15739;
+var $rtfeldman$elm_css$VirtualDom$Styled$getClassname = function (styles) {
+	return $elm$core$List$isEmpty(styles) ? 'unstyled' : A2(
+		$elm$core$String$cons,
+		_Utils_chr('_'),
+		$rtfeldman$elm_hex$Hex$toString(
+			A2(
+				$Skinney$murmur3$Murmur3$hashString,
+				$rtfeldman$elm_css$VirtualDom$Styled$murmurSeed,
+				$rtfeldman$elm_css$Css$Preprocess$Resolve$compile(
+					$elm$core$List$singleton(
+						$rtfeldman$elm_css$Css$Preprocess$stylesheet(
+							$elm$core$List$singleton(
+								A2(
+									$rtfeldman$elm_css$VirtualDom$Styled$makeSnippet,
+									styles,
+									$rtfeldman$elm_css$Css$Structure$UniversalSelectorSequence(_List_Nil)))))))));
+};
+var $elm$virtual_dom$VirtualDom$property = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_property,
+			_VirtualDom_noInnerHtmlOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $rtfeldman$elm_css$Html$Styled$Internal$css = function (styles) {
+	var classname = $rtfeldman$elm_css$VirtualDom$Styled$getClassname(styles);
+	var classProperty = A2(
+		$elm$virtual_dom$VirtualDom$property,
+		'className',
+		$elm$json$Json$Encode$string(classname));
+	return A3($rtfeldman$elm_css$VirtualDom$Styled$Attribute, classProperty, styles, classname);
+};
+var $rtfeldman$elm_css$Html$Styled$Attributes$css = $rtfeldman$elm_css$Html$Styled$Internal$css;
+var $rtfeldman$elm_css$VirtualDom$Styled$Node = F3(
+	function (a, b, c) {
+		return {$: 'Node', a: a, b: b, c: c};
+	});
+var $rtfeldman$elm_css$VirtualDom$Styled$node = $rtfeldman$elm_css$VirtualDom$Styled$Node;
+var $rtfeldman$elm_css$Html$Styled$node = $rtfeldman$elm_css$VirtualDom$Styled$node;
+var $rtfeldman$elm_css$Html$Styled$div = $rtfeldman$elm_css$Html$Styled$node('div');
 var $rtfeldman$elm_css$Css$Preprocess$AppendProperty = function (a) {
 	return {$: 'AppendProperty', a: a};
 };
@@ -8492,27 +8966,117 @@ var $rtfeldman$elm_css$Css$property = F2(
 	function (key, value) {
 		return $rtfeldman$elm_css$Css$Preprocess$AppendProperty(key + (':' + value));
 	});
-var $rtfeldman$elm_css$Css$backgroundColor = function (c) {
-	return A2($rtfeldman$elm_css$Css$property, 'background-color', c.value);
-};
 var $rtfeldman$elm_css$Css$prop1 = F2(
 	function (key, arg) {
 		return A2($rtfeldman$elm_css$Css$property, key, arg.value);
 	});
-var $rtfeldman$elm_css$Css$border = $rtfeldman$elm_css$Css$prop1('border');
-var $rtfeldman$elm_css$Css$borderRadius = $rtfeldman$elm_css$Css$prop1('border-radius');
-var $rtfeldman$elm_css$VirtualDom$Styled$Node = F3(
-	function (a, b, c) {
-		return {$: 'Node', a: a, b: b, c: c};
-	});
-var $rtfeldman$elm_css$VirtualDom$Styled$node = $rtfeldman$elm_css$VirtualDom$Styled$Node;
-var $rtfeldman$elm_css$Html$Styled$node = $rtfeldman$elm_css$VirtualDom$Styled$node;
-var $rtfeldman$elm_css$Html$Styled$button = $rtfeldman$elm_css$Html$Styled$node('button');
-var $rtfeldman$elm_css$Css$center = $rtfeldman$elm_css$Css$prop1('center');
-var $rtfeldman$elm_css$Css$color = function (c) {
-	return A2($rtfeldman$elm_css$Css$property, 'color', c.value);
+var $rtfeldman$elm_css$Css$stringsToValue = function (list) {
+	return $elm$core$List$isEmpty(list) ? {value: 'none'} : {
+		value: A2(
+			$elm$core$String$join,
+			', ',
+			A2(
+				$elm$core$List$map,
+				function (s) {
+					return s;
+				},
+				list))
+	};
 };
-var $rtfeldman$elm_css$Css$fontSize = $rtfeldman$elm_css$Css$prop1('font-size');
+var $rtfeldman$elm_css$Css$fontFamilies = A2(
+	$elm$core$Basics$composeL,
+	$rtfeldman$elm_css$Css$prop1('font-family'),
+	$rtfeldman$elm_css$Css$stringsToValue);
+var $rtfeldman$elm_css$Html$Styled$h1 = $rtfeldman$elm_css$Html$Styled$node('h1');
+var $rtfeldman$elm_css$Css$prop2 = F3(
+	function (key, argA, argB) {
+		return A2(
+			$rtfeldman$elm_css$Css$property,
+			key,
+			A2(
+				$elm$core$String$join,
+				' ',
+				_List_fromArray(
+					[argA.value, argB.value])));
+	});
+var $rtfeldman$elm_css$Css$margin2 = $rtfeldman$elm_css$Css$prop2('margin');
+var $rtfeldman$elm_css$Css$PxUnits = {$: 'PxUnits'};
+var $elm$core$String$fromFloat = _String_fromNumber;
+var $rtfeldman$elm_css$Css$Internal$lengthConverter = F3(
+	function (units, unitLabel, numericValue) {
+		return {
+			absoluteLength: $rtfeldman$elm_css$Css$Structure$Compatible,
+			calc: $rtfeldman$elm_css$Css$Structure$Compatible,
+			flexBasis: $rtfeldman$elm_css$Css$Structure$Compatible,
+			fontSize: $rtfeldman$elm_css$Css$Structure$Compatible,
+			length: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrAutoOrCoverOrContain: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrNone: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrNoneOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrNumber: $rtfeldman$elm_css$Css$Structure$Compatible,
+			lengthOrNumberOrAutoOrNoneOrContent: $rtfeldman$elm_css$Css$Structure$Compatible,
+			numericValue: numericValue,
+			textIndent: $rtfeldman$elm_css$Css$Structure$Compatible,
+			unitLabel: unitLabel,
+			units: units,
+			value: _Utils_ap(
+				$elm$core$String$fromFloat(numericValue),
+				unitLabel)
+		};
+	});
+var $rtfeldman$elm_css$Css$px = A2($rtfeldman$elm_css$Css$Internal$lengthConverter, $rtfeldman$elm_css$Css$PxUnits, 'px');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $rtfeldman$elm_css$VirtualDom$Styled$style = F2(
+	function (key, val) {
+		return A3(
+			$rtfeldman$elm_css$VirtualDom$Styled$Attribute,
+			A2($elm$virtual_dom$VirtualDom$style, key, val),
+			_List_Nil,
+			'');
+	});
+var $rtfeldman$elm_css$Html$Styled$Attributes$style = $rtfeldman$elm_css$VirtualDom$Styled$style;
+var $rtfeldman$elm_css$VirtualDom$Styled$Unstyled = function (a) {
+	return {$: 'Unstyled', a: a};
+};
+var $rtfeldman$elm_css$VirtualDom$Styled$text = function (str) {
+	return $rtfeldman$elm_css$VirtualDom$Styled$Unstyled(
+		$elm$virtual_dom$VirtualDom$text(str));
+};
+var $rtfeldman$elm_css$Html$Styled$text = $rtfeldman$elm_css$VirtualDom$Styled$text;
+var $rtfeldman$elm_css$Html$Styled$h3 = $rtfeldman$elm_css$Html$Styled$node('h3');
+var $author$project$HubNetworkWebClient$viewError = function (errorMessage) {
+	var errorHeading = 'Couldn\'t fetch data at this time.';
+	return A2(
+		$rtfeldman$elm_css$Html$Styled$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				$rtfeldman$elm_css$Html$Styled$h3,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$text(errorHeading)
+					])),
+				$rtfeldman$elm_css$Html$Styled$text('Error: ' + errorMessage)
+			]));
+};
+var $rtfeldman$elm_css$Css$prop4 = F5(
+	function (key, argA, argB, argC, argD) {
+		return A2(
+			$rtfeldman$elm_css$Css$property,
+			key,
+			A2(
+				$elm$core$String$join,
+				' ',
+				_List_fromArray(
+					[argA.value, argB.value, argC.value, argD.value])));
+	});
+var $rtfeldman$elm_css$Css$boxShadow4 = $rtfeldman$elm_css$Css$prop4('box-shadow');
+var $rtfeldman$elm_css$Css$center = $rtfeldman$elm_css$Css$prop1('center');
+var $rtfeldman$elm_css$Html$Styled$h2 = $rtfeldman$elm_css$Html$Styled$node('h2');
 var $rtfeldman$elm_css$Css$withPrecedingHash = function (str) {
 	return A2($elm$core$String$startsWith, '#', str) ? str : A2(
 		$elm$core$String$cons,
@@ -8879,94 +9443,7 @@ var $rtfeldman$elm_css$Css$hex = function (str) {
 	}
 	return $rtfeldman$elm_css$Css$erroneousHex(str);
 };
-var $rtfeldman$elm_css$Css$marginTop = $rtfeldman$elm_css$Css$prop1('margin-top');
-var $rtfeldman$elm_css$Css$prop2 = F3(
-	function (key, argA, argB) {
-		return A2(
-			$rtfeldman$elm_css$Css$property,
-			key,
-			A2(
-				$elm$core$String$join,
-				' ',
-				_List_fromArray(
-					[argA.value, argB.value])));
-	});
-var $rtfeldman$elm_css$Css$padding2 = $rtfeldman$elm_css$Css$prop2('padding');
-var $rtfeldman$elm_css$Css$PxUnits = {$: 'PxUnits'};
-var $elm$core$String$fromFloat = _String_fromNumber;
-var $rtfeldman$elm_css$Css$Internal$lengthConverter = F3(
-	function (units, unitLabel, numericValue) {
-		return {
-			absoluteLength: $rtfeldman$elm_css$Css$Structure$Compatible,
-			calc: $rtfeldman$elm_css$Css$Structure$Compatible,
-			flexBasis: $rtfeldman$elm_css$Css$Structure$Compatible,
-			fontSize: $rtfeldman$elm_css$Css$Structure$Compatible,
-			length: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrAuto: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrAutoOrCoverOrContain: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrNone: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrNoneOrMinMaxDimension: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrNumber: $rtfeldman$elm_css$Css$Structure$Compatible,
-			lengthOrNumberOrAutoOrNoneOrContent: $rtfeldman$elm_css$Css$Structure$Compatible,
-			numericValue: numericValue,
-			textIndent: $rtfeldman$elm_css$Css$Structure$Compatible,
-			unitLabel: unitLabel,
-			units: units,
-			value: _Utils_ap(
-				$elm$core$String$fromFloat(numericValue),
-				unitLabel)
-		};
-	});
-var $rtfeldman$elm_css$Css$px = A2($rtfeldman$elm_css$Css$Internal$lengthConverter, $rtfeldman$elm_css$Css$PxUnits, 'px');
-var $rtfeldman$elm_css$VirtualDom$Styled$Attribute = F3(
-	function (a, b, c) {
-		return {$: 'Attribute', a: a, b: b, c: c};
-	});
-var $rtfeldman$elm_css$VirtualDom$Styled$murmurSeed = 15739;
-var $rtfeldman$elm_css$VirtualDom$Styled$getClassname = function (styles) {
-	return $elm$core$List$isEmpty(styles) ? 'unstyled' : A2(
-		$elm$core$String$cons,
-		_Utils_chr('_'),
-		$rtfeldman$elm_hex$Hex$toString(
-			A2(
-				$Skinney$murmur3$Murmur3$hashString,
-				$rtfeldman$elm_css$VirtualDom$Styled$murmurSeed,
-				$rtfeldman$elm_css$Css$Preprocess$Resolve$compile(
-					$elm$core$List$singleton(
-						$rtfeldman$elm_css$Css$Preprocess$stylesheet(
-							$elm$core$List$singleton(
-								A2(
-									$rtfeldman$elm_css$VirtualDom$Styled$makeSnippet,
-									styles,
-									$rtfeldman$elm_css$Css$Structure$UniversalSelectorSequence(_List_Nil)))))))));
-};
-var $elm$virtual_dom$VirtualDom$property = F2(
-	function (key, value) {
-		return A2(
-			_VirtualDom_property,
-			_VirtualDom_noInnerHtmlOrFormAction(key),
-			_VirtualDom_noJavaScriptOrHtmlUri(value));
-	});
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $rtfeldman$elm_css$Html$Styled$Internal$css = function (styles) {
-	var classname = $rtfeldman$elm_css$VirtualDom$Styled$getClassname(styles);
-	var classProperty = A2(
-		$elm$virtual_dom$VirtualDom$property,
-		'className',
-		$elm$json$Json$Encode$string(classname));
-	return A3($rtfeldman$elm_css$VirtualDom$Styled$Attribute, classProperty, styles, classname);
-};
-var $rtfeldman$elm_css$Html$Styled$styled = F4(
-	function (fn, styles, attrs, children) {
-		return A2(
-			fn,
-			A2(
-				$elm$core$List$cons,
-				$rtfeldman$elm_css$Html$Styled$Internal$css(styles),
-				attrs),
-			children);
-	});
+var $rtfeldman$elm_css$Html$Styled$table = $rtfeldman$elm_css$Html$Styled$node('table');
 var $rtfeldman$elm_css$Css$Preprocess$ApplyStyles = function (a) {
 	return {$: 'ApplyStyles', a: a};
 };
@@ -9039,61 +9516,56 @@ var $rtfeldman$elm_css$Css$textAlign = function (fn) {
 		'text-align',
 		fn($rtfeldman$elm_css$Css$Internal$lengthForOverloadedProperty));
 };
+var $author$project$HubNetworkWebClient$RequestDeviceColor = F3(
+	function (a, b, c) {
+		return {$: 'RequestDeviceColor', a: a, b: b, c: c};
+	});
+var $author$project$HubNetworkWebClient$RequestDeviceStatus = function (a) {
+	return {$: 'RequestDeviceStatus', a: a};
+};
+var $rtfeldman$elm_css$Css$backgroundColor = function (c) {
+	return A2($rtfeldman$elm_css$Css$property, 'background-color', c.value);
+};
+var $rtfeldman$elm_css$Css$border = $rtfeldman$elm_css$Css$prop1('border');
+var $rtfeldman$elm_css$Css$borderRadius = $rtfeldman$elm_css$Css$prop1('border-radius');
+var $rtfeldman$elm_css$Html$Styled$button = $rtfeldman$elm_css$Html$Styled$node('button');
+var $rtfeldman$elm_css$Css$color = function (c) {
+	return A2($rtfeldman$elm_css$Css$property, 'color', c.value);
+};
+var $rtfeldman$elm_css$Css$fontSize = $rtfeldman$elm_css$Css$prop1('font-size');
+var $rtfeldman$elm_css$Css$margin = $rtfeldman$elm_css$Css$prop1('margin');
+var $rtfeldman$elm_css$Html$Styled$styled = F4(
+	function (fn, styles, attrs, children) {
+		return A2(
+			fn,
+			A2(
+				$elm$core$List$cons,
+				$rtfeldman$elm_css$Html$Styled$Internal$css(styles),
+				attrs),
+			children);
+	});
 var $rtfeldman$elm_css$Css$width = $rtfeldman$elm_css$Css$prop1('width');
-var $author$project$HubNetworkWebClient$bigButton = A2(
+var $author$project$HubNetworkWebClient$colorButton = A2(
 	$rtfeldman$elm_css$Html$Styled$styled,
 	$rtfeldman$elm_css$Html$Styled$button,
 	_List_fromArray(
 		[
 			$rtfeldman$elm_css$Css$width(
-			$rtfeldman$elm_css$Css$px(300)),
+			$rtfeldman$elm_css$Css$px(50)),
 			$rtfeldman$elm_css$Css$backgroundColor(
 			$rtfeldman$elm_css$Css$hex('#397cd5')),
 			$rtfeldman$elm_css$Css$color(
 			$rtfeldman$elm_css$Css$hex('#fff')),
-			A2(
-			$rtfeldman$elm_css$Css$padding2,
-			$rtfeldman$elm_css$Css$px(14),
-			$rtfeldman$elm_css$Css$px(20)),
-			$rtfeldman$elm_css$Css$marginTop(
-			$rtfeldman$elm_css$Css$px(10)),
+			$rtfeldman$elm_css$Css$margin(
+			$rtfeldman$elm_css$Css$px(5)),
 			$rtfeldman$elm_css$Css$border(
 			$rtfeldman$elm_css$Css$px(0)),
 			$rtfeldman$elm_css$Css$borderRadius(
 			$rtfeldman$elm_css$Css$px(4)),
 			$rtfeldman$elm_css$Css$fontSize(
-			$rtfeldman$elm_css$Css$px(16)),
-			$rtfeldman$elm_css$Css$textAlign($rtfeldman$elm_css$Css$center)
+			$rtfeldman$elm_css$Css$px(15))
 		]));
-var $author$project$HubNetworkWebClient$bigButtonRefreshing = A2(
-	$rtfeldman$elm_css$Html$Styled$styled,
-	$author$project$HubNetworkWebClient$bigButton,
-	_List_fromArray(
-		[
-			$rtfeldman$elm_css$Css$backgroundColor(
-			$rtfeldman$elm_css$Css$hex('#999955'))
-		]));
-var $rtfeldman$elm_css$Html$Styled$Attributes$css = $rtfeldman$elm_css$Html$Styled$Internal$css;
-var $rtfeldman$elm_css$Html$Styled$div = $rtfeldman$elm_css$Html$Styled$node('div');
-var $rtfeldman$elm_css$Css$stringsToValue = function (list) {
-	return $elm$core$List$isEmpty(list) ? {value: 'none'} : {
-		value: A2(
-			$elm$core$String$join,
-			', ',
-			A2(
-				$elm$core$List$map,
-				function (s) {
-					return s;
-				},
-				list))
-	};
-};
-var $rtfeldman$elm_css$Css$fontFamilies = A2(
-	$elm$core$Basics$composeL,
-	$rtfeldman$elm_css$Css$prop1('font-family'),
-	$rtfeldman$elm_css$Css$stringsToValue);
-var $rtfeldman$elm_css$Html$Styled$h1 = $rtfeldman$elm_css$Html$Styled$node('h1');
-var $rtfeldman$elm_css$Css$margin2 = $rtfeldman$elm_css$Css$prop2('margin');
+var $elm$core$Basics$ge = _Utils_ge;
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -9119,61 +9591,30 @@ var $rtfeldman$elm_css$Html$Styled$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $rtfeldman$elm_css$VirtualDom$Styled$style = F2(
-	function (key, val) {
-		return A3(
-			$rtfeldman$elm_css$VirtualDom$Styled$Attribute,
-			A2($elm$virtual_dom$VirtualDom$style, key, val),
-			_List_Nil,
-			'');
+var $rtfeldman$elm_css$Css$cssFunction = F2(
+	function (funcName, args) {
+		return funcName + ('(' + (A2($elm$core$String$join, ', ', args) + ')'));
 	});
-var $rtfeldman$elm_css$Html$Styled$Attributes$style = $rtfeldman$elm_css$VirtualDom$Styled$style;
-var $rtfeldman$elm_css$VirtualDom$Styled$Unstyled = function (a) {
-	return {$: 'Unstyled', a: a};
-};
-var $rtfeldman$elm_css$VirtualDom$Styled$text = function (str) {
-	return $rtfeldman$elm_css$VirtualDom$Styled$Unstyled(
-		$elm$virtual_dom$VirtualDom$text(str));
-};
-var $rtfeldman$elm_css$Html$Styled$text = $rtfeldman$elm_css$VirtualDom$Styled$text;
-var $rtfeldman$elm_css$Html$Styled$h3 = $rtfeldman$elm_css$Html$Styled$node('h3');
-var $author$project$HubNetworkWebClient$viewError = function (errorMessage) {
-	var errorHeading = 'Couldn\'t fetch data at this time.';
-	return A2(
-		$rtfeldman$elm_css$Html$Styled$div,
-		_List_Nil,
-		_List_fromArray(
-			[
+var $rtfeldman$elm_css$Css$rgb = F3(
+	function (r, g, b) {
+		return {
+			alpha: 1,
+			blue: b,
+			color: $rtfeldman$elm_css$Css$Structure$Compatible,
+			green: g,
+			red: r,
+			value: A2(
+				$rtfeldman$elm_css$Css$cssFunction,
+				'rgb',
 				A2(
-				$rtfeldman$elm_css$Html$Styled$h3,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text(errorHeading)
-					])),
-				$rtfeldman$elm_css$Html$Styled$text('Error: ' + errorMessage)
-			]));
-};
-var $rtfeldman$elm_css$Css$prop4 = F5(
-	function (key, argA, argB, argC, argD) {
-		return A2(
-			$rtfeldman$elm_css$Css$property,
-			key,
-			A2(
-				$elm$core$String$join,
-				' ',
-				_List_fromArray(
-					[argA.value, argB.value, argC.value, argD.value])));
+					$elm$core$List$map,
+					$elm$core$String$fromInt,
+					_List_fromArray(
+						[r, g, b])))
+		};
 	});
-var $rtfeldman$elm_css$Css$boxShadow4 = $rtfeldman$elm_css$Css$prop4('box-shadow');
-var $rtfeldman$elm_css$Html$Styled$h2 = $rtfeldman$elm_css$Html$Styled$node('h2');
-var $rtfeldman$elm_css$Html$Styled$table = $rtfeldman$elm_css$Html$Styled$node('table');
-var $author$project$HubNetworkWebClient$RequestDeviceStatus = function (a) {
-	return {$: 'RequestDeviceStatus', a: a};
-};
-var $rtfeldman$elm_css$Css$margin = $rtfeldman$elm_css$Css$prop1('margin');
 var $rtfeldman$elm_css$Css$marginLeft = $rtfeldman$elm_css$Css$prop1('margin-left');
+var $rtfeldman$elm_css$Css$padding2 = $rtfeldman$elm_css$Css$prop2('padding');
 var $author$project$HubNetworkWebClient$smallButton = A2(
 	$rtfeldman$elm_css$Html$Styled$styled,
 	$rtfeldman$elm_css$Html$Styled$button,
@@ -9279,7 +9720,111 @@ var $author$project$HubNetworkWebClient$viewDevice = function (device) {
 							[
 								$rtfeldman$elm_css$Html$Styled$text('Switch On')
 							])))
-					]))
+					])),
+				(device.rgb.red >= 0) ? A2(
+				$rtfeldman$elm_css$Html$Styled$td,
+				_List_fromArray(
+					[
+						$rtfeldman$elm_css$Html$Styled$Attributes$css(
+						_List_fromArray(
+							[
+								$rtfeldman$elm_css$Css$backgroundColor(
+								A3($rtfeldman$elm_css$Css$rgb, device.rgb.red, device.rgb.green, device.rgb.blue))
+							]))
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$rtfeldman$elm_css$Html$Styled$tr,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'red', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+R')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'red', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-R')
+											]))
+									])),
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'green', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+G')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'green', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-G')
+											]))
+									])),
+								A2(
+								$rtfeldman$elm_css$Html$Styled$td,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'blue', 'up'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('+B')
+											])),
+										A2(
+										$author$project$HubNetworkWebClient$colorButton,
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$Events$onClick(
+												A3($author$project$HubNetworkWebClient$RequestDeviceColor, device, 'blue', 'down'))
+											]),
+										_List_fromArray(
+											[
+												$rtfeldman$elm_css$Html$Styled$text('-B')
+											]))
+									]))
+							]))
+					])) : A2($rtfeldman$elm_css$Html$Styled$td, _List_Nil, _List_Nil)
 			]));
 };
 var $rtfeldman$elm_css$Html$Styled$th = $rtfeldman$elm_css$Html$Styled$node('th');
@@ -9301,6 +9846,13 @@ var $author$project$HubNetworkWebClient$viewTableHeader = A2(
 			_List_fromArray(
 				[
 					$rtfeldman$elm_css$Html$Styled$text('Status')
+				])),
+			A2(
+			$rtfeldman$elm_css$Html$Styled$th,
+			_List_Nil,
+			_List_fromArray(
+				[
+					$rtfeldman$elm_css$Html$Styled$text('RGB')
 				]))
 		]));
 var $author$project$HubNetworkWebClient$viewStatus = function (status) {
@@ -9361,7 +9913,7 @@ var $author$project$HubNetworkWebClient$view = function (model) {
 		$rtfeldman$elm_css$Html$Styled$div,
 		_List_fromArray(
 			[
-				A2($rtfeldman$elm_css$Html$Styled$Attributes$style, 'width', '300px'),
+				A2($rtfeldman$elm_css$Html$Styled$Attributes$style, 'width', '500px'),
 				$rtfeldman$elm_css$Html$Styled$Attributes$css(
 				_List_fromArray(
 					[
@@ -9398,34 +9950,13 @@ var $author$project$HubNetworkWebClient$view = function (model) {
 					[
 						$rtfeldman$elm_css$Html$Styled$text('Local Smart Network')
 					])),
-				$author$project$HubNetworkWebClient$viewStatusOrError(model),
-				model.waitingForHubStatus ? A2(
-				$author$project$HubNetworkWebClient$bigButtonRefreshing,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$HubNetworkWebClient$RequestHubStatus)
-					]),
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text('Refreshing...')
-					])) : A2(
-				$author$project$HubNetworkWebClient$bigButton,
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$Events$onClick($author$project$HubNetworkWebClient$RequestHubStatus)
-					]),
-				_List_fromArray(
-					[
-						$rtfeldman$elm_css$Html$Styled$text('Refresh')
-					]))
+				$author$project$HubNetworkWebClient$viewStatusOrError(model)
 			]));
 };
 var $author$project$HubNetworkWebClient$main = $elm$browser$Browser$element(
 	{
 		init: $author$project$HubNetworkWebClient$init,
-		subscriptions: function (_v0) {
-			return $elm$core$Platform$Sub$none;
-		},
+		subscriptions: $author$project$HubNetworkWebClient$subscriptions,
 		update: $author$project$HubNetworkWebClient$update,
 		view: A2($elm$core$Basics$composeR, $author$project$HubNetworkWebClient$view, $rtfeldman$elm_css$Html$Styled$toUnstyled)
 	});
